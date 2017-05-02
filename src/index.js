@@ -182,13 +182,16 @@ class Fuse {
         
         const children = this._search(item[this.options.recursive.key], tokenSearchers, fullSearcher)
         if (resultMap[i]) {
-          resultMap[i] = {
+          const result = {
             ...resultMap[i],
             item: {
-              ...resultMap[i].record,
+              ...resultMap[i].item,
               [this.options.recursive.key]: children
             }
-          }
+          };
+          const idx = results.indexOf(resultMap[i]);
+          resultMap[i] = result;
+          results[idx] = result;
         } else if (children.length) {
           resultMap[i] = {
             item: {
