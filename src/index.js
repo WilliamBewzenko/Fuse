@@ -184,14 +184,14 @@ class Fuse {
         if (resultMap[i]) {
           resultMap[i] = {
             ...resultMap[i],
-            record: {
+            item: {
               ...resultMap[i].record,
               [this.options.recursive.key]: children
             }
           }
-        } else {
+        } else if (children.length) {
           resultMap[i] = {
-            record: {
+            item: {
               ...item,
               [this.options.recursive.key]: children
             },
