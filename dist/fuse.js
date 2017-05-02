@@ -543,7 +543,11 @@ module.exports = function (text, pattern, patternAlphabet, _ref) {
 "use strict";
 
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -589,6 +593,11 @@ var Fuse = function () {
         includeMatches = _ref$includeMatches === undefined ? false : _ref$includeMatches,
         _ref$includeScore = _ref.includeScore,
         includeScore = _ref$includeScore === undefined ? false : _ref$includeScore,
+        _ref$recursive = _ref.recursive,
+        recursive = _ref$recursive === undefined ? {
+      enable: false,
+      key: undefined
+    } : _ref$recursive,
         _ref$verbose = _ref.verbose,
         verbose = _ref$verbose === undefined ? false : _ref$verbose;
 
@@ -612,7 +621,8 @@ var Fuse = function () {
       sortFn: sortFn,
       verbose: verbose,
       tokenize: tokenize,
-      matchAllTokens: matchAllTokens
+      matchAllTokens: matchAllTokens,
+      recursive: recursive
     };
 
     this.set(list);
@@ -633,17 +643,7 @@ var Fuse = function () {
           tokenSearchers = _prepareSearchers2.tokenSearchers,
           fullSearcher = _prepareSearchers2.fullSearcher;
 
-      var _search2 = this._search(tokenSearchers, fullSearcher),
-          weights = _search2.weights,
-          results = _search2.results;
-
-      this._computeScore(weights, results);
-
-      if (this.options.shouldSort) {
-        this._sort(results);
-      }
-
-      return this._format(results);
+      return this._search(this.list, tokenSearchers, fullSearcher);
     }
   }, {
     key: '_prepareSearchers',
@@ -667,10 +667,11 @@ var Fuse = function () {
   }, {
     key: '_search',
     value: function _search() {
-      var tokenSearchers = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
-      var fullSearcher = arguments[1];
+      var list = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.list;
+      var tokenSearchers = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+      var fullSearcher = arguments[2];
 
-      var list = this.list;
+      // const list = this.list
       var resultMap = {};
       var results = [];
 
@@ -729,9 +730,33 @@ var Fuse = function () {
             fullSearcher: fullSearcher
           });
         }
+
+        if (this.options.recursive.enable && item[this.options.recursive.key] !== null && item[this.options.recursive.key] !== undefined && isArray(item[this.options.recursive.key])) {
+
+          var children = this._search(item[this.options.recursive.key], tokenSearchers, fullSearcher);
+          if (resultMap[_i]) {
+            resultMap[_i] = _extends({}, resultMap[_i], {
+              record: _extends({}, resultMap[_i].record, _defineProperty({}, this.options.recursive.key, children))
+            });
+          } else {
+            resultMap[_i] = {
+              record: _extends({}, item, _defineProperty({}, this.options.recursive.key, children)),
+              output: []
+            };
+
+            results.push(resultMap[_i]);
+          }
+        }
       }
 
-      return { weights: weights, results: results };
+      // TODO: Colocar em uma funcao ):
+      this._computeScore(weights, results);
+
+      if (this.options.shouldSort) {
+        this._sort(results);
+      }
+
+      return this._format(results);
     }
   }, {
     key: '_analyze',

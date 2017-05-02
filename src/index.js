@@ -50,6 +50,11 @@ class Fuse {
     includeMatches = false,
     includeScore = false,
 
+    recursive = {
+      enable: false,
+      key: undefined
+    },
+
     verbose = false
   }) {
     this.options = {
@@ -70,7 +75,8 @@ class Fuse {
       sortFn,
       verbose,
       tokenize,
-      matchAllTokens
+      matchAllTokens,
+      recursive
     }
 
     this.set(list)
@@ -88,16 +94,8 @@ class Fuse {
       tokenSearchers,
       fullSearcher
     } = this._prepareSearchers(pattern)
-
-    let { weights, results } = this._search(tokenSearchers, fullSearcher)
-
-    this._computeScore(weights, results)
-
-    if (this.options.shouldSort) {
-      this._sort(results)
-    }
     
-    return this._format(results)
+    return this._search(this.list, tokenSearchers, fullSearcher)
   }
 
   _prepareSearchers (pattern = '') {
@@ -116,8 +114,8 @@ class Fuse {
     return { tokenSearchers, fullSearcher }
   }
 
-  _search (tokenSearchers = [], fullSearcher) {
-    const list = this.list
+  _search (list = this.list, tokenSearchers = [], fullSearcher) {
+    // const list = this.list
     const resultMap = {}
     const results = []
 
@@ -176,9 +174,43 @@ class Fuse {
           fullSearcher
         })
       }
+
+      if (this.options.recursive.enable &&
+            item[this.options.recursive.key] !== null &&
+            item[this.options.recursive.key] !== undefined &&
+            isArray(item[this.options.recursive.key])) {
+        
+        const children = this._search(item[this.options.recursive.key], tokenSearchers, fullSearcher)
+        if (resultMap[i]) {
+          resultMap[i] = {
+            ...resultMap[i],
+            record: {
+              ...resultMap[i].record,
+              [this.options.recursive.key]: children
+            }
+          }
+        } else {
+          resultMap[i] = {
+            record: {
+              ...item,
+              [this.options.recursive.key]: children
+            },
+            output: []
+          }
+
+          results.push(resultMap[i])
+        }
+      }
     }
 
-    return { weights, results }
+    // TODO: Colocar em uma funcao ):
+    this._computeScore(weights, results)
+
+    if (this.options.shouldSort) {
+      this._sort(results)
+    }
+    
+    return this._format(results)
   }
 
   _analyze ({ key, value, record, index }, { tokenSearchers = [], fullSearcher = [], resultMap = {}, results = [] }) {
