@@ -1,5 +1,5 @@
 /*!
- * Fuse.js v3.0.0 - Lightweight fuzzy-search (http://fusejs.io)
+ * Fuse.js v3.0.1 - Lightweight fuzzy-search (http://fusejs.io)
  * 
  * Copyright (c) 2012-2017 Kirollos Risk (http://kiro.me)
  * All Rights Reserved. Apache Software License 2.0
@@ -735,12 +735,15 @@ var Fuse = function () {
 
           var children = this._search(item[this.options.recursive.key], tokenSearchers, fullSearcher);
           if (resultMap[_i]) {
-            resultMap[_i] = _extends({}, resultMap[_i], {
-              record: _extends({}, resultMap[_i].record, _defineProperty({}, this.options.recursive.key, children))
+            var result = _extends({}, resultMap[_i], {
+              item: _extends({}, resultMap[_i].item, _defineProperty({}, this.options.recursive.key, children))
             });
-          } else {
+            var idx = results.indexOf(resultMap[_i]);
+            resultMap[_i] = result;
+            results[idx] = result;
+          } else if (children.length) {
             resultMap[_i] = {
-              record: _extends({}, item, _defineProperty({}, this.options.recursive.key, children)),
+              item: _extends({}, item, _defineProperty({}, this.options.recursive.key, children)),
               output: []
             };
 
