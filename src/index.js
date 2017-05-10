@@ -1,6 +1,7 @@
 const Bitap = require('./bitap')
 const deepValue = require('./helpers/deep_value')
 const isArray = require('./helpers/is_array')
+const highlighter = require('./helpers/highlighter')
 
 class Fuse {
   constructor (list, { 
@@ -51,8 +52,14 @@ class Fuse {
     includeScore = false,
 
     recursive = {
-      enable: false,
+      enabled: false,
       key: undefined
+    },
+
+    highlight = {
+      enabled: false,
+      prefix: '<b>',
+      suffix: '</b>',
     },
 
     verbose = false
@@ -76,7 +83,8 @@ class Fuse {
       verbose,
       tokenize,
       matchAllTokens,
-      recursive
+      recursive,
+      highlight
     }
 
     this.set(list)
@@ -175,38 +183,31 @@ class Fuse {
         })
       }
 
-      if (this.options.recursive.enable &&
-            item[this.options.recursive.key] !== null &&
-            item[this.options.recursive.key] !== undefined &&
-            isArray(item[this.options.recursive.key])) {
-        
+      if (this.options.recursive.enabled &&
+          isArray(item[this.options.recursive.key]) && 
+          item[this.options.recursive.key].length > 0
+      ){
         const children = this._search(item[this.options.recursive.key], tokenSearchers, fullSearcher)
         if (resultMap[i]) {
-          const result = {
-            ...resultMap[i],
-            item: {
-              ...resultMap[i].item,
+          const result = Object.assign(resultMap[i], {
+            item: Object.assign(resultMap[i].item, {
               [this.options.recursive.key]: children
-            }
-          };
+            })
+          })
           const idx = results.indexOf(resultMap[i]);
           resultMap[i] = result;
           results[idx] = result;
         } else if (children.length) {
-          resultMap[i] = {
-            item: {
-              ...item,
+          resultMap[i] = Object.assign(resultMap[i], {
+            item: Object.assign(item, {
               [this.options.recursive.key]: children
-            },
-            output: []
-          }
-
+            })
+          })
           results.push(resultMap[i])
         }
       }
     }
 
-    // TODO: Colocar em uma funcao ):
     this._computeScore(weights, results)
 
     if (this.options.shouldSort) {
@@ -419,6 +420,12 @@ class Fuse {
       }
 
       finalOutput.push(data)
+    }
+
+    if (this.options.highlight && this.options.highlight.enabled){
+      finalOutput.forEach(item => {
+        highlighter(item, this.options);
+      });
     }
 
     return finalOutput

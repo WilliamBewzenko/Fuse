@@ -81,7 +81,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 8);
+/******/ 	return __webpack_require__(__webpack_require__.s = 9);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -106,9 +106,9 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var bitapRegexSearch = __webpack_require__(5);
-var bitapSearch = __webpack_require__(7);
-var patternAlphabet = __webpack_require__(4);
+var bitapRegexSearch = __webpack_require__(6);
+var bitapSearch = __webpack_require__(8);
+var patternAlphabet = __webpack_require__(5);
 
 var Bitap = function () {
   function Bitap(pattern, _ref) {
@@ -255,6 +255,45 @@ module.exports = function (obj, path) {
 "use strict";
 
 
+module.exports = function (resultItem, objOptions) {
+  var prefix = objOptions.highlight.prefix || '<b>';
+  var suffix = objOptions.highlight.suffix || '</b>';
+  var recursiveOpt = objOptions.recursive;
+
+  resultItem.matches.forEach(function (matchItem) {
+    var text = resultItem.item[matchItem.key];
+    var result = [];
+    var matches = [].concat(matchItem.indices); // limpar referencia
+    var pair = matches.shift();
+
+    for (var i = 0; i < text.length; i++) {
+      var char = text.charAt(i);
+      if (pair && i == pair[0]) {
+        result.push(prefix);
+      }
+      result.push(char);
+      if (pair && i == pair[1]) {
+        result.push(suffix);
+        pair = matches.shift();
+      }
+    }
+    resultItem.highlight = result.join('');
+
+    if (recursiveOpt.enabled && recursiveOpt.key && resultItem[recursiveOpt.key] && resultItem[recursiveOpt.key].length > 0) {
+      resultItem[recursiveOpt.key].forEach(function (child) {
+        highlighter(child);
+      });
+    }
+  });
+};
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
 module.exports = function () {
   var matchmask = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
   var minMatchCharLength = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
@@ -286,7 +325,7 @@ module.exports = function () {
 };
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -308,7 +347,7 @@ module.exports = function (pattern) {
 };
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -337,7 +376,7 @@ module.exports = function (text, pattern) {
 };
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -365,14 +404,14 @@ module.exports = function (pattern, _ref) {
 };
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var bitapScore = __webpack_require__(6);
-var matchedIndices = __webpack_require__(3);
+var bitapScore = __webpack_require__(7);
+var matchedIndices = __webpack_require__(4);
 
 module.exports = function (text, pattern, patternAlphabet, _ref) {
   var _ref$location = _ref.location,
@@ -537,13 +576,11 @@ module.exports = function (text, pattern, patternAlphabet, _ref) {
 };
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -554,6 +591,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var Bitap = __webpack_require__(1);
 var deepValue = __webpack_require__(2);
 var isArray = __webpack_require__(0);
+var highlighter = __webpack_require__(3);
 
 var Fuse = function () {
   function Fuse(list, _ref) {
@@ -595,9 +633,15 @@ var Fuse = function () {
         includeScore = _ref$includeScore === undefined ? false : _ref$includeScore,
         _ref$recursive = _ref.recursive,
         recursive = _ref$recursive === undefined ? {
-      enable: false,
+      enabled: false,
       key: undefined
     } : _ref$recursive,
+        _ref$highlight = _ref.highlight,
+        highlight = _ref$highlight === undefined ? {
+      enabled: false,
+      prefix: '<b>',
+      suffix: '</b>'
+    } : _ref$highlight,
         _ref$verbose = _ref.verbose,
         verbose = _ref$verbose === undefined ? false : _ref$verbose;
 
@@ -622,7 +666,8 @@ var Fuse = function () {
       verbose: verbose,
       tokenize: tokenize,
       matchAllTokens: matchAllTokens,
-      recursive: recursive
+      recursive: recursive,
+      highlight: highlight
     };
 
     this.set(list);
@@ -731,28 +776,24 @@ var Fuse = function () {
           });
         }
 
-        if (this.options.recursive.enable && item[this.options.recursive.key] !== null && item[this.options.recursive.key] !== undefined && isArray(item[this.options.recursive.key])) {
-
+        if (this.options.recursive.enabled && isArray(item[this.options.recursive.key]) && item[this.options.recursive.key].length > 0) {
           var children = this._search(item[this.options.recursive.key], tokenSearchers, fullSearcher);
           if (resultMap[_i]) {
-            var result = _extends({}, resultMap[_i], {
-              item: _extends({}, resultMap[_i].item, _defineProperty({}, this.options.recursive.key, children))
+            var result = Object.assign(resultMap[_i], {
+              item: Object.assign(resultMap[_i].item, _defineProperty({}, this.options.recursive.key, children))
             });
             var idx = results.indexOf(resultMap[_i]);
             resultMap[_i] = result;
             results[idx] = result;
           } else if (children.length) {
-            resultMap[_i] = {
-              item: _extends({}, item, _defineProperty({}, this.options.recursive.key, children)),
-              output: []
-            };
-
+            resultMap[_i] = Object.assign(resultMap[_i], {
+              item: Object.assign(item, _defineProperty({}, this.options.recursive.key, children))
+            });
             results.push(resultMap[_i]);
           }
         }
       }
 
-      // TODO: Colocar em uma funcao ):
       this._computeScore(weights, results);
 
       if (this.options.shouldSort) {
@@ -931,6 +972,8 @@ var Fuse = function () {
   }, {
     key: '_format',
     value: function _format(results) {
+      var _this = this;
+
       var finalOutput = [];
 
       this._log('\n\nOutput:\n\n', results);
@@ -982,6 +1025,12 @@ var Fuse = function () {
         }
 
         finalOutput.push(data);
+      }
+
+      if (this.options.highlight && this.options.highlight.enabled) {
+        finalOutput.forEach(function (item) {
+          highlighter(item, _this.options);
+        });
       }
 
       return finalOutput;
