@@ -1,12 +1,12 @@
 {
-  "name": "fuse.js",
+  "name": "sk-fuse.js",
   "author": {
     "name": "Kirollos Risk",
     "email": "kirollos@gmail.com",
     "url": "http://kiro.me"
   },
   "version": "3.0.1",
-  "description": "Lightweight fuzzy-search",
+  "description": "Lightweight fuzzy-search based on Fuse.js by Kirollos Risk",
   "license": "Apache",
   "types": "./index.d.ts",
   "repository": {
