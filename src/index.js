@@ -198,11 +198,11 @@ class Fuse {
           resultMap[i] = result;
           results[idx] = result;
         } else if (children.length) {
-          resultMap[i] = Object.assign(resultMap[i], {
+          resultMap[i] = {
             item: Object.assign(item, {
               [this.options.recursive.key]: children
             })
-          })
+          }
           results.push(resultMap[i])
         }
       }
@@ -422,7 +422,7 @@ class Fuse {
       finalOutput.push(data)
     }
 
-    if (this.options.highlight && this.options.highlight.enabled){
+    if (this.options.includeMatches && this.options.highlight && this.options.highlight.enabled){
       finalOutput.forEach(item => {
         highlighter(item, this.options);
       });
