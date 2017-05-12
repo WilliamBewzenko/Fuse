@@ -189,8 +189,8 @@ class Fuse {
       ){
         const children = this._search(item[this.options.recursive.key], tokenSearchers, fullSearcher)
         if (resultMap[i]) {
-          const result = Object.assign(resultMap[i], {
-            item: Object.assign(resultMap[i].item, {
+          const result = Object.assign({}, resultMap[i], {
+            item: Object.assign({}, resultMap[i].item, {
               [this.options.recursive.key]: children
             })
           })
@@ -199,9 +199,10 @@ class Fuse {
           results[idx] = result;
         } else if (children.length) {
           resultMap[i] = {
-            item: Object.assign(item, {
+            item: Object.assign({}, item, {
               [this.options.recursive.key]: children
-            })
+            }),
+            output: []
           }
           results.push(resultMap[i])
         }
