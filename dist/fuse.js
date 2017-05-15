@@ -779,16 +779,17 @@ var Fuse = function () {
         if (this.options.recursive.enabled && isArray(item[this.options.recursive.key]) && item[this.options.recursive.key].length > 0) {
           var children = this._search(item[this.options.recursive.key], tokenSearchers, fullSearcher);
           if (resultMap[_i]) {
-            var result = Object.assign(resultMap[_i], {
-              item: Object.assign(resultMap[_i].item, _defineProperty({}, this.options.recursive.key, children))
+            var result = Object.assign({}, resultMap[_i], {
+              item: Object.assign({}, resultMap[_i].item, _defineProperty({}, this.options.recursive.key, children))
             });
             var idx = results.indexOf(resultMap[_i]);
             resultMap[_i] = result;
             results[idx] = result;
           } else if (children.length) {
-            resultMap[_i] = Object.assign(resultMap[_i], {
-              item: Object.assign(item, _defineProperty({}, this.options.recursive.key, children))
-            });
+            resultMap[_i] = {
+              item: Object.assign({}, item, _defineProperty({}, this.options.recursive.key, children)),
+              output: []
+            };
             results.push(resultMap[_i]);
           }
         }
@@ -1027,7 +1028,7 @@ var Fuse = function () {
         finalOutput.push(data);
       }
 
-      if (this.options.highlight && this.options.highlight.enabled) {
+      if (this.options.includeMatches && this.options.highlight && this.options.highlight.enabled) {
         finalOutput.forEach(function (item) {
           highlighter(item, _this.options);
         });
